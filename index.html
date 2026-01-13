@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Livrable 1 : Modèle de Données (MCD)</title>
+
+  <!-- Fonts (optional) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;600;700;800&family=Source+Code+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg: #cfc6b8;
+      --ink: #2c241b;
+      --paper: #fdfbf7;
+      --paper-border: #d6cbb8;
+      --muted: #6b5d52;
+      --accent: #7c2d12;
+      --accent-dark: #451a03;
+      --shadow: rgba(0,0,0,0.2);
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+
+    body{
+      margin:0;
+      font-family: "Source Serif 4", ui-serif, Georgia, serif;
+      background: var(--bg);
+      color: var(--ink);
+      padding: 10px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    ::selection{ background:#d4b483; color:#2c241b; }
+
+    .bg-texture{
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      opacity:.10;
+      background-image: radial-gradient(#4a4036 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+
+    .page{
+      max-width: 1152px; /* max-w-6xl */
+      margin: 0 auto;
+      background: var(--paper);
+      border: 1px solid var(--paper-border);
+      position: relative;
+      z-index: 2;
+      box-shadow:
+        10px 10px 20px var(--shadow),
+        inset 0 0 60px rgba(255,255,220,0.5);
+      overflow:hidden;
+    }
+
+    .page::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background-image: url('https://www.transparenttextures.com/patterns/cream-paper.png');
+      opacity: .50;
+      pointer-events:none;
+      z-index:0;
+    }
+
+    header{
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(253,251,247,0.95);
+      backdrop-filter: blur(6px);
+      border-bottom: 2px solid #bdafa0;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    }
+
+    .header-inner{
+      position: relative;
+      z-index: 2;
+      padding: 24px 32px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 16px;
+      background-image: linear-gradient(transparent 95%, #e5e7eb 95%);
+      background-size: 100% 2rem;
+    }
+
+    .title-row{ display:flex; align-items:center; gap: 12px; margin:0; }
+
+    .logo-badge{
+      width: 40px;
+      height: 40px;
+      display:grid;
+      place-items:center;
+      background: var(--accent);
+      color: white;
+      border: 1px solid var(--accent-dark);
+      border-radius: 8px;
+      box-shadow: 2px 2px 0 var(--accent-dark);
+      flex: 0 0 auto;
+      font-weight: 800;
+      font-family: "Source Code Pro", ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    h1{
+      margin:0;
+      font-size: 22px;
+      font-weight: 800;
+      color: #1a1410;
+      letter-spacing: -0.01em;
+      text-shadow: 1px 1px 0 #d4b483;
+    }
+
+    .underline-accent{
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+      text-decoration-color: var(--accent);
+      text-underline-offset: 6px;
+    }
+
+    .subtitle{
+      margin: 10px 0 0;
+      font-family: "Source Code Pro", ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      display:flex;
+      align-items:center;
+      gap: 10px;
+    }
+
+    .dot{ width: 8px; height:8px; border-radius:999px; background: var(--muted); display:inline-block; }
+
+    .stamp{
+      display:none;
+      transform: rotate(-2deg);
+      border: 4px solid rgba(124,45,18,0.30);
+      padding: 8px 12px;
+      border-radius: 10px;
+      align-self:flex-start;
+      background: rgba(253,251,247,0.45);
+    }
+    .stamp .top{ font-family:"Source Code Pro", monospace; font-size:11px; letter-spacing:.16em; text-transform:uppercase; color: rgba(124,45,18,0.60); font-weight:700; text-align:right; }
+    .stamp .date{ font-family:"Source Code Pro", monospace; font-size:18px; font-weight:800; color: rgba(124,45,18,0.80); text-align:right; margin-top:4px; }
+
+    main{
+      position: relative;
+      z-index: 2;
+      padding: 40px 32px;
+      display:flex;
+      flex-direction:column;
+      gap: 64px;
+    }
+
+    .hole{ position:absolute; left: 10px; width: 16px; height:16px; border-radius:999px; background:#5c5042; box-shadow: inset 1px 1px 3px rgba(0,0,0,0.6); z-index:3; }
+    .hole.h1{ top: 90px; }
+    .hole.h2{ top: 50%; transform: translateY(-50%); }
+    .hole.h3{ bottom: 90px; }
+
+    .section-title{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      font-size: 18px;
+      font-weight: 800;
+      margin:0 0 18px;
+    }
+
+    /* Section 1: Diagram container */
+    .diagram-wrap{
+      background:#fff;
+      border: 1px solid #2c241b;
+      box-shadow: 0 0 0 1px #ccc, 0 4px 0 0 #bbb;
+      overflow:hidden;
+      position: relative;
+    }
+
+    .diagram-wrap::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      opacity:.10;
+      pointer-events:none;
+      background-image:
+        linear-gradient(#1e3a8a 1px, transparent 1px),
+        linear-gradient(90deg, #1e3a8a 1px, transparent 1px);
+      background-size: 20px 20px;
+      z-index:0;
+    }
+
+    .diagram-inner{
+      position:relative;
+      z-index:2;
+      padding: 32px;
+      overflow:auto;
+      display:flex;
+      justify-content:center;
+      background: rgba(255,255,255,0.90);
+    }
+
+    .thumbtack{
+      position:absolute;
+      top: 64px;
+      width: 12px;
+      height: 12px;
+      border-radius:999px;
+      background:#7f1d1d;
+      border: 1px solid #9ca3af;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.20);
+      z-index: 5;
+    }
+    .thumbtack.left{ left: -8px; }
+    .thumbtack.right{ right: -8px; }
+
+    /* Section 2: UML Cards */
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .uml-card{
+      background:#fff;
+      border: 1px solid #e5e7eb;
+      border-top: 4px solid #2563eb;
+      padding: 18px;
+      box-shadow: 2px 2px 5px rgba(0,0,0,0.10);
+      transition: transform .15s ease;
+      position: relative;
+    }
+    .uml-card:hover{ transform: translateY(-3px); }
+
+    .uml-card::before{
+      content:"";
+      position:absolute;
+      top:-10px;
+      left:50%;
+      transform: translateX(-50%) rotate(1deg);
+      width: 64px;
+      height: 24px;
+      background: rgba(255,255,255,0.50);
+      border-left: 1px solid rgba(255,255,255,0.80);
+      border-right: 1px solid rgba(255,255,255,0.80);
+      backdrop-filter: blur(3px);
+      opacity: .60;
+    }
+
+    .uml-card.orange{ border-top-color:#ea580c; }
+    .uml-card.blue{ border-top-color:#2563eb; }
+    .uml-card.red{ border-top-color:#dc2626; }
+    .uml-card.green{ border-top-color:#16a34a; }
+    .uml-card.purple{ border-top-color:#9333ea; }
+
+    .uml-head{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #f3f4f6;
+      margin-bottom: 12px;
+    }
+
+    .uml-title{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      font-weight: 900;
+      font-size: 18px;
+    }
+
+    .badge{
+      font-family:"Source Code Pro", monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      font-weight: 800;
+      padding: 4px 8px;
+      border-radius: 8px;
+      border: 1px solid;
+    }
+
+    .badge.orange{ background:#ffedd5; color:#9a3412; border-color:#fed7aa; }
+    .badge.blue{ background:#dbeafe; color:#1e40af; border-color:#bfdbfe; }
+    .badge.red{ background:#fee2e2; color:#991b1b; border-color:#fecaca; }
+    .badge.green{ background:#dcfce7; color:#166534; border-color:#bbf7d0; }
+    .badge.purple{ background:#f3e8ff; color:#6b21a8; border-color:#e9d5ff; }
+
+    .uml-desc{
+      font-size: 12px;
+      color:#5c5042;
+      font-style: italic;
+      background:#f9fafb;
+      border: 1px solid #f3f4f6;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+
+    .attr-list{
+      font-family:"Source Code Pro", monospace;
+      font-size: 12px;
+      color:#4b5563;
+      display:flex;
+      flex-direction:column;
+      gap: 8px;
+    }
+
+    .attr{
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      gap: 12px;
+      border-bottom: 1px dashed #f3f4f6;
+      padding-bottom: 6px;
+    }
+    .attr:last-child{ border-bottom:none; padding-bottom:0; }
+
+    .attr-left{ display:flex; align-items:baseline; gap: 10px; min-width: 0; }
+
+    .pk{
+      font-weight: 900;
+      color:#b45309;
+      flex: 0 0 auto;
+    }
+    .notpk{
+      font-weight: 900;
+      opacity: .40;
+      flex: 0 0 auto;
+    }
+
+    .attr-name{ font-weight: 800; color:#111827; }
+    .attr-name.dim{ color:#374151; }
+
+    .attr-right{
+      display:flex;
+      align-items:baseline;
+      gap: 10px;
+      flex: 0 0 auto;
+      font-size: 11px;
+      color:#6b7280;
+      white-space: nowrap;
+    }
+
+    .detail{
+      color:#9ca3af;
+      font-style: italic;
+      display:none;
+    }
+
+    .attr:hover .detail{ display:inline-block; }
+
+    .subblock{
+      border-top: 1px dashed #86efac;
+      margin-top: 10px;
+      padding-top: 10px;
+    }
+
+    .subblock-title{
+      font-family: "Source Serif 4", ui-serif, Georgia, serif;
+      font-size: 12px;
+      font-weight: 900;
+      color:#14532d;
+      margin: 0 0 8px;
+    }
+
+    /* Section 3: Note (folder tab) */
+    .note{
+      background:#2c241b;
+      color:#fdfbf7;
+      border-top: 8px solid #1e40af;
+      padding: 28px;
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.50);
+      position: relative;
+      display:flex;
+      flex-direction:column;
+      gap: 16px;
+    }
+
+    .paperclip{
+      position:absolute;
+      top:-28px;
+      right: 40px;
+      transform: rotate(12deg);
+      color:#9ca3af;
+      font-size: 44px;
+      user-select:none;
+    }
+
+    .note h3{
+      margin:0;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: .14em;
+      display:flex;
+      align-items:center;
+      gap: 10px;
+    }
+
+    .note-grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      margin-top: 8px;
+    }
+
+    .obs{
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.20);
+      border-radius: 10px;
+      padding: 14px;
+      position: relative;
+    }
+
+    .obs-tag{
+      position:absolute;
+      top:-10px;
+      left: 16px;
+      padding: 0 8px;
+      background:#2c241b;
+      color:#93c5fd;
+      font-family:"Source Code Pro", monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .10em;
+      font-weight: 900;
+    }
+
+    .obs strong{
+      display:block;
+      margin-bottom: 8px;
+      font-size: 16px;
+      font-family: "Source Serif 4", ui-serif, Georgia, serif;
+      color:#fff;
+    }
+
+    .obs p{
+      margin:0;
+      color:#d6cbb8;
+      line-height: 1.6;
+    }
+
+    code{ font-family:"Source Code Pro", monospace; font-size: 0.95em; }
+
+    footer{
+      padding: 22px 18px;
+      text-align:center;
+      color:#8c7e72;
+      font-size: 12px;
+      border-top: 1px solid var(--paper-border);
+      background:#f3efe6;
+      font-family:"Source Code Pro", monospace;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* responsive */
+    @media (min-width: 640px){
+      body{ padding: 24px; }
+      .stamp{ display:block; }
+    }
+
+    @media (min-width: 1024px){
+      .grid{ grid-template-columns: repeat(2, 1fr); }
+      .note-grid{ grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (min-width: 1280px){
+      .grid{ grid-template-columns: repeat(3, 1fr); }
+    }
+
+    /* small inline icons */
+    .i{ font-family:"Source Code Pro", monospace; font-weight: 900; }
+    .blue{ color:#1e40af; }
+  </style>
+</head>
+
+<body>
+  <div class="bg-texture" aria-hidden="true"></div>
+
+  <div class="page">
+    <header>
+      <div class="header-inner">
+        <div>
+          <div class="title-row">
+            <div class="logo-badge" aria-hidden="true">▦</div>
+            <h1><span class="underline-accent">Livrable 1 : Modèle de Données (MCD)</span></h1>
+          </div>
+          <p class="subtitle"><span class="dot"></span> SlowMode MVP • Data Architect</p>
+        </div>
+
+        <div class="stamp" aria-label="Date">
+          <div class="top">Délivré le</div>
+          <div class="date">14 JAN 2026</div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <!-- HOLE PUNCHES -->
+      <div class="hole h1" aria-hidden="true"></div>
+      <div class="hole h2" aria-hidden="true"></div>
+      <div class="hole h3" aria-hidden="true"></div>
+
+      <!-- 1. VISION GLOBALE -->
+      <section style="position:relative;">
+        <h2 class="section-title" style="border-bottom:2px dotted #d4b483; padding-bottom:10px; width: fit-content;">
+          <span class="i blue" aria-hidden="true">⎇</span>
+          1. Vision Globale des Relations (UML)
+        </h2>
+
+        <div class="diagram-wrap">
+          <div class="diagram-inner">
+            <svg width="800" height="450" viewBox="0 0 800 450" style="max-width: 1024px; width:100%;">
+              <defs>
+                <marker id="arrowhead-retro" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7" fill="#2c241b" />
+                </marker>
+                <marker id="diamond-retro" markerWidth="12" markerHeight="12" refX="0" refY="6" orient="auto">
+                  <path d="M0,6 L6,0 L12,6 L6,12 z" fill="#ffffff" stroke="#2c241b" stroke-width="2" />
+                </marker>
+              </defs>
+
+              <!-- USER -->
+              <g transform="translate(350, 20)">
+                <rect x="0" y="0" width="120" height="60" rx="2" fill="#fff7ed" stroke="#ea580c" stroke-width="2" style="filter: drop-shadow(2px 2px 0 rgba(234,88,12,0.2));" />
+                <text x="60" y="25" text-anchor="middle" style="font-weight:800; fill:#9a3412; font-size:14px; letter-spacing:.06em;">USER</text>
+                <text x="60" y="45" text-anchor="middle" style="fill:#c2410c; font-size:12px; font-family:'Source Code Pro', monospace;">Client / Couturier</text>
+              </g>
+
+              <!-- FABRIC -->
+              <g transform="translate(100, 140)">
+                <rect x="0" y="0" width="120" height="50" rx="2" fill="#eff6ff" stroke="#2563eb" stroke-width="2" style="filter: drop-shadow(2px 2px 0 rgba(37,99,235,0.2));" />
+                <text x="60" y="30" text-anchor="middle" style="font-weight:800; fill:#1e40af; font-size:14px; letter-spacing:.06em;">FABRIC</text>
+              </g>
+
+              <!-- PORTFOLIO -->
+              <g transform="translate(580, 140)">
+                <rect x="0" y="0" width="140" height="50" rx="2" fill="#eff6ff" stroke="#2563eb" stroke-width="2" style="filter: drop-shadow(2px 2px 0 rgba(37,99,235,0.2));" />
+                <text x="70" y="30" text-anchor="middle" style="font-weight:800; fill:#1e40af; font-size:14px; letter-spacing:.06em;">PORTFOLIO_ITEM</text>
+              </g>
+
+              <!-- ORDER -->
+              <g transform="translate(350, 240)">
+                <rect x="0" y="0" width="120" height="60" rx="2" fill="#fef2f2" stroke="#dc2626" stroke-width="2" style="filter: drop-shadow(2px 2px 0 rgba(220,38,38,0.2));" />
+                <text x="60" y="25" text-anchor="middle" style="font-weight:800; fill:#991b1b; font-size:14px; letter-spacing:.06em;">ORDER</text>
+                <text x="60" y="45" text-anchor="middle" style="fill:#b91c1c; font-size:12px; font-family:'Source Code Pro', monospace;">Commande</text>
+              </g>
+
+              <!-- CONVERSATION -->
+              <g transform="translate(150, 360)">
+                <rect x="0" y="0" width="120" height="50" rx="2" fill="#f0fdf4" stroke="#16a34a" stroke-width="2" style="filter: drop-shadow(2px 2px 0 rgba(22,163,74,0.2));" />
+                <text x="60" y="30" text-anchor="middle" style="font-weight:800; fill:#166534; font-size:14px; letter-spacing:.06em;">CONVERSATION</text>
+              </g>
+
+              <!-- REVIEW -->
+              <g transform="translate(550, 360)">
+                <rect x="0" y="0" width="120" height="50" rx="2" fill="#faf5ff" stroke="#9333ea" stroke-width="2" style="filter: drop-shadow(2px 2px 0 rgba(147,51,234,0.2));" />
+                <text x="60" y="30" text-anchor="middle" style="font-weight:800; fill:#6b21a8; font-size:14px; letter-spacing:.06em;">REVIEW</text>
+              </g>
+
+              <!-- Relations -->
+              <path d="M350 50 L 160 50 L 160 140" fill="none" stroke="#2c241b" stroke-width="2" marker-end="url(#arrowhead-retro)" />
+              <text x="250" y="45" text-anchor="middle" style="fill:#4b5563; font-size:12px; font-family:'Source Code Pro', monospace; font-style:italic;">Vend (1..*)</text>
+
+              <path d="M470 50 L 650 50 L 650 140" fill="none" stroke="#2c241b" stroke-width="2" marker-end="url(#arrowhead-retro)" />
+              <text x="560" y="45" text-anchor="middle" style="fill:#4b5563; font-size:12px; font-family:'Source Code Pro', monospace; font-style:italic;">Expose (1..*)</text>
+
+              <path d="M380 80 L 380 240" fill="none" stroke="#2c241b" stroke-width="2" marker-end="url(#arrowhead-retro)" />
+              <text x="375" y="160" text-anchor="end" style="fill:#4b5563; font-size:12px; font-family:'Source Code Pro', monospace; font-style:italic;">Client</text>
+
+              <path d="M440 80 C 500 120, 500 200, 440 240" fill="none" stroke="#2c241b" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arrowhead-retro)" />
+              <text x="500" y="160" text-anchor="start" style="fill:#4b5563; font-size:12px; font-family:'Source Code Pro', monospace; font-style:italic;">Couturier</text>
+
+              <path d="M350 280 L 210 280 L 210 360" fill="none" stroke="#2c241b" stroke-width="2" marker-start="url(#diamond-retro)" />
+              <text x="240" y="275" text-anchor="middle" style="fill:#4b5563; font-size:12px; font-family:'Source Code Pro', monospace; font-style:italic;">Génère (1..1)</text>
+
+              <path d="M470 280 L 610 280 L 610 360" fill="none" stroke="#2c241b" stroke-width="2" marker-end="url(#arrowhead-retro)" />
+              <text x="560" y="275" text-anchor="middle" style="fill:#4b5563; font-size:12px; font-family:'Source Code Pro', monospace; font-style:italic;">Notée par (0..1)</text>
+            </svg>
+          </div>
+        </div>
+
+        <div class="thumbtack left" aria-hidden="true"></div>
+        <div class="thumbtack right" aria-hidden="true"></div>
+      </section>
+
+      <!-- 2. DICTIONNAIRE -->
+      <section>
+        <h2 class="section-title"><span class="i blue" aria-hidden="true">🗄</span> 2. Dictionnaire des Données (Structure Détaillée)</h2>
+
+        <div class="grid">
+          <!-- USER -->
+          <div class="uml-card orange">
+            <div class="uml-head">
+              <div class="uml-title"><span aria-hidden="true">👤</span><span>User</span></div>
+              <span class="badge orange">Class</span>
+            </div>
+            <div class="uml-desc">Acteur unifié (Client &amp; Couturier)</div>
+            <div class="attr-list">
+              <div class="attr"><div class="attr-left"><span class="pk">+ PK</span><span class="attr-name">id</span></div><div class="attr-right"><span>UUID</span></div></div>
+              <div class="attr"><div class="attr-left"><span class="notpk">+</span><span class="attr-name dim">email</span></div><div class="attr-right"><span>String</span></div></div>
+              <div class="attr"><div class="attr-left"><span class="notpk">+</span><span class="attr-name dim">pseudo</span></div><div class="attr-right"><span>String</span></div></div>
+              <div class="attr"><div class="attr-left"><span class="notpk">+</span><span class="attr-name dim">role</span></div><div class="attr-right"><span class="detail">(CLIENT, COUTURIER...)</span><span>Enum</span></div></div>
+              <div class="attr"><div class="attr-left"><span class="notpk">+</span><span class="attr-name dim">avatar_url</span></div><div class="attr-right"><span>String</span></div></div>
+              <div class="attr"><div class="attr-left"><span class="notpk">+</span><span class="attr-name dim">location</span></div><div class="attr-right"><span class="detail">(Ville/Region)</span><span>String</span></div></div>
+              <div class="attr"><div class="attr-left"><span class="notpk">+</span><span class="attr-name dim">rating_avg</span></div><div class="attr-right"><span>Float</span></div></div>
+            </div>
+          </div>
+
+          <!-- FABRIC -->
+          <div class="uml-card blue">
+            <div class="uml-head">
+              <div class="uml-title"><span aria-hidden="true">✂</span><span>Fabric</span></div>
+              <span class="badge blue">Class</span>
+            </div>
+            <div class="uml-desc">Stock communautaire (Marketplace)</div>
+            <div class="attr-list">
+              <div class="attr"><div class="attr-left"><span class="pk">+ PK</span><span class="attr-name">id</span></div><div class="attr-right"><span>UUID</span></div></div>
+              <div class="attr"><div class="attr-left"><span class="notpk">+</span><span class="attr-name dim">name</span></div><div class="attr-right"><span>String</span></div></div>
+              <div class="attr"><div class="attr-left"><span class="notpk">+</span><span class="attr-name dim">material</span></div><div class="attr-right"><span class="detail">(Coton, Lin...)</span><span>String</span></div></div>
+              <div class="attr"><div class="attr-left"><span class="notpk">+</span><span class="attr-name dim">dim_length</span></div><div class="attr-right"><span>Float</span></div></div>
+              <div class="attr"><div class="attr-left"><span class="notpk">+</span><span class="attr-name dim">dim_width</span></div><div class="attr-right"><span>Float</span></div></div>
+              <div class="attr"><div class="attr-left"><span class="notpk">+</span><span class="attr-name dim">price</span></div><div class="attr-right"><span>Float</span></div></div>
+              <div class="attr"><div class="attr-left"><span class="notpk">+</span><span class="attr-name dim">is_sold</span></div><div class="attr-right"><span>Boolean</span></div></div>
+            </div>
+          </div>
+
+          <!-- ORDER -->
+          <div class="uml-card red">
+            <div class="uml-head">
+              <div class="uml-title"><span aria-hidden="true">👜</span><span>Order</span></div>
+              <span class="badge red">Class</span>
+            </div>
+            <div class="uml-desc">Commande Sur-Mesure</div>
+            <div class="attr-list">
+              <div class="attr"><div class="attr-left"><span class="pk">+ PK</span><span class="attr-name">id</span></div><div class="attr-right"><span>UUID</span></div></div>
+              <div class="attr"><div class="attr-left"><span class="notpk">+</span><span class="attr-name dim">created_at</span></div><div class="attr-right"><span>Date</span></div></div>
+              <div class="attr"><div class="attr-left"><span class="notpk">+</span><span class="attr-name dim">deadline</span></div><div class="attr-right"><span>Date</span></div></div>
+              <div class="attr"><div class="attr-left"><span class="notpk">+</span><span class="attr-name dim">status</span></div><div class="attr-right"><span class="detail">(QUOTE, PROGRESS, SHIPPED)</span><span>Enum</span></div></div>
+              <div class="attr"><div class="attr-left"><span class="notpk">+</span><span class="attr-name dim">final_price</span></div><div class="attr-right"><span>Float</span></div></div>
+              <div class="attr"><div class="attr-left"><span class="notpk">+</span><span class="attr-name dim">photos_refs</span></div><div class="attr-right"><span>List&lt;String&gt;</span></div></div>
+              <div class="attr"><div class="attr-left"><span class="notpk">+</span><span class="attr-name dim">brief</span></div><div class="attr-right"><span>String</span></div></div>
+            </div>
+          </div>
+
+          <!-- PORTFOLIO -->
+          <div class="uml-card blue">
+            <div class="uml-head">
+              <div class="uml-title"><span aria-hidden="true">🖼</span><span>PortfolioItem</span></div>
+              <span class="badge blue">Class</span>
+            </div>
+            <div class="uml-desc">Vitrine savoir-faire Couturier</div>
+            <div class="attr-list">
+              <div class="attr"><div class="attr-left"><span class="pk">+ PK</span><span class="attr-name">id</span></div><div class="attr-right"><span>UUID</span></div></div>
+              <div class="attr"><div class="attr-left"><span class="notpk">+</span><span class="attr-name dim">title</span></div><div class="attr-right"><span>String</span></div></div>
+              <div class="attr"><div class="attr-left"><span class="notpk">+</span><span class="attr-name dim">description</span></div><div class="attr-right"><span>String</span></div></div>
+              <div class="attr"><div class="attr-left"><span class="notpk">+</span><span class="attr-name dim">tags</span></div><div class="attr-right"><span class="detail">(Robe, Upcycling)</span><span>List&lt;String&gt;</span></div></div>
+              <div class="attr"><div class="attr-left"><span class="notpk">+</span><span class="attr-name dim">photo_urls</span></div><div class="attr-right"><span>List&lt;String&gt;</span></div></div>
+              <div class="attr"><div class="attr-left"><span class="notpk">+</span><span class="attr-name dim">likes</span></div><div class="attr-right"><span>Integer</span></div></div>
+            </div>
+          </div>
+
+          <!-- CONVERSATION -->
+          <div class="uml-card green">
+            <div class="uml-head">
+              <div class="uml-title"><span aria-hidden="true">💬</span><span>Conversation</span></div>
+              <span class="badge green">Class</span>
+            </div>
+            <div class="uml-desc">Canal lié à une commande</div>
+            <div class="attr-list">
+              <div class="attr"><div class="attr-left"><span class="pk">+ PK</span><span class="attr-name">id</span></div><div class="attr-right"><span>UUID</span></div></div>
+              <div class="attr"><div class="attr-left"><span class="notpk">+</span><span class="attr-name dim">last_msg_at</span></div><div class="attr-right"><span>Date</span></div></div>
+              <div class="attr"><div class="attr-left"><span class="notpk">+</span><span class="attr-name dim">unread</span></div><div class="attr-right"><span>Boolean</span></div></div>
+
+              <div class="subblock">
+                <p class="subblock-title">Has Many Messages:</p>
+                <div class="attr"><div class="attr-left"><span class="notpk">+</span><span class="attr-name dim">content</span></div><div class="attr-right"><span>String</span></div></div>
+                <div class="attr"><div class="attr-left"><span class="notpk">+</span><span class="attr-name dim">type</span></div><div class="attr-right"><span class="detail">(TEXT, IMAGE)</span><span>Enum</span></div></div>
+                <div class="attr"><div class="attr-left"><span class="notpk">+</span><span class="attr-name dim">sender_id</span></div><div class="attr-right"><span>UUID</span></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- REVIEW -->
+          <div class="uml-card purple">
+            <div class="uml-head">
+              <div class="uml-title"><span aria-hidden="true">★</span><span>Review</span></div>
+              <span class="badge purple">Class</span>
+            </div>
+            <div class="uml-desc">Feedback fin de commande</div>
+            <div class="attr-list">
+              <div class="attr"><div class="attr-left"><span class="pk">+ PK</span><span class="attr-name">id</span></div><div class="attr-right"><span>UUID</span></div></div>
+              <div class="attr"><div class="attr-left"><span class="notpk">+</span><span class="attr-name dim">rating</span></div><div class="attr-right"><span class="detail">(1-5)</span><span>Int</span></div></div>
+              <div class="attr"><div class="attr-left"><span class="notpk">+</span><span class="attr-name dim">comment</span></div><div class="attr-right"><span>String</span></div></div>
+              <div class="attr"><div class="attr-left"><span class="notpk">+</span><span class="attr-name dim">date</span></div><div class="attr-right"><span>Date</span></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. NOTE D’ARCHITECTURE -->
+      <section class="note">
+        <div class="paperclip" aria-hidden="true">📎</div>
+        <h3><span aria-hidden="true" style="color:#60a5fa;">📄</span> 3. Note d’architecture (Transition NoSQL)</h3>
+
+        <div class="note-grid">
+          <div class="obs">
+            <div class="obs-tag">Observation A</div>
+            <strong>Messages</strong>
+            <p>
+              Dans l’implémentation Firestore, les entités <code>Message</code> seront modélisées en sous-collections de <code>Conversation</code>,
+              afin d’optimiser les requêtes de lecture et la gestion des règles de sécurité.
+            </p>
+          </div>
+
+          <div class="obs">
+            <div class="obs-tag">Observation B</div>
+            <strong>Portfolio</strong>
+            <p>
+              De même, <code>PortfolioItem</code> pourra être stocké en sous-collection de <code>User</code>,
+              afin de faciliter le partitionnement des données par utilisateur.
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      &copy; 2026 SlowMode Project - CONFIDENTIAL - DO NOT DISTRIBUTE
+    </footer>
+  </div>
+</body>
+</html>
